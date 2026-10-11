@@ -1,0 +1,416 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI-Based Medicine Reminder & Prescription Management System</title>
+    <!-- Modern Typography -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="/static/css/style.css">
+</head>
+<body>
+
+    <!-- Top Navigation Bar -->
+    <header class="top-navbar">
+        <div class="brand-section">
+            <div class="brand-logo-icon">💊</div>
+            <div class="brand-title">
+                <h1>MedRemind AI</h1>
+                <span>Medicine Reminder & Prescription Management System (SCM Review 2)</span>
+            </div>
+        </div>
+
+        <div style="display:flex; align-items:center; gap:0.75rem;">
+            <!-- SCM Traceability Modal Button -->
+            <button id="scm-modal-btn" class="scm-badge-btn" title="View SCM Configuration Items & Baselines">
+                <span>📋</span> SCM Audit CIs
+            </button>
+
+            <!-- Role Switcher -->
+            <div class="role-switcher-container">
+                <span class="role-switcher-label"><span>🔄</span> Active Persona:</span>
+                <select id="role-select" class="role-select">
+                    <!-- Populated dynamically via JS -->
+                </select>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Content Area -->
+    <main class="main-wrapper">
+
+        <!-- Active Persona Profile Header -->
+        <section class="profile-banner">
+            <div class="profile-info">
+                <div id="banner-avatar-icon" class="profile-avatar">👤</div>
+                <div class="profile-details">
+                    <div style="display:flex; align-items:center; gap:0.6rem;">
+                        <h2 id="banner-user-name">Loading Profile...</h2>
+                        <span id="banner-user-role" class="profile-badge">PATIENT</span>
+                    </div>
+                    <p id="banner-user-meta" class="profile-meta">Loading details...</p>
+                </div>
+            </div>
+            <div>
+                <button id="btn-demo-reminder" class="btn btn-primary" title="Trigger audio chime and on-screen reminder modal">
+                    <span>🔔</span> Test Live Audio Reminder
+                </button>
+            </div>
+        </section>
+
+        <!-- Navigation Tabs for 4 Stakeholders -->
+        <nav class="portal-tabs">
+            <button class="tab-btn active" data-tab="patient">
+                <span>👤</span> Patient Portal
+            </button>
+            <button class="tab-btn" data-tab="doctor">
+                <span>🩺</span> Doctor Portal (Issue Rx + AI Check)
+            </button>
+            <button class="tab-btn" data-tab="caregiver">
+                <span>🛡️</span> Caregiver Portal (Missed Dose Alerts)
+            </button>
+            <button class="tab-btn" data-tab="pharmacy">
+                <span>💊</span> Pharmacy Portal (Refill Dispenser)
+            </button>
+        </nav>
+
+        <!-- ============================================ -->
+        <!-- VIEW 1: PATIENT PORTAL                       -->
+        <!-- ============================================ -->
+        <section id="view-patient" class="view-panel active">
+            <!-- Top KPI Cards -->
+            <div class="grid-3" style="margin-bottom: 1.5rem;">
+                <div class="card" style="padding:1.2rem; display:flex; align-items:center; gap:1rem;">
+                    <div style="font-size:2rem; background:#e0f2fe; padding:0.75rem; border-radius:12px;">📅</div>
+                    <div>
+                        <div style="font-size:0.85rem; color:var(--text-muted);">Total Doses Scheduled</div>
+                        <div id="stat-total-doses" style="font-size:1.6rem; font-weight:800; color:var(--text-main);">0</div>
+                    </div>
+                </div>
+                <div class="card" style="padding:1.2rem; display:flex; align-items:center; gap:1rem;">
+                    <div style="font-size:2rem; background:#ecfdf5; padding:0.75rem; border-radius:12px;">✅</div>
+                    <div>
+                        <div style="font-size:0.85rem; color:var(--text-muted);">Doses Taken Today</div>
+                        <div id="stat-taken-doses" style="font-size:1.6rem; font-weight:800; color:var(--success);">0</div>
+                    </div>
+                </div>
+                <div class="card" style="padding:1.2rem; display:flex; align-items:center; gap:1rem;">
+                    <div style="font-size:2rem; background:#fef3c7; padding:0.75rem; border-radius:12px;">📈</div>
+                    <div>
+                        <div style="font-size:0.85rem; color:var(--text-muted);">Overall Adherence Rate</div>
+                        <div id="stat-compliance-pct" style="font-size:1.6rem; font-weight:800; color:var(--primary);">100%</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="grid-2-1">
+                <!-- Left: Daily Timeline -->
+                <div>
+                    <div class="card">
+                        <div class="card-header">
+                            <h2 class="card-title"><span>⏰</span> Today's Medication Timeline</h2>
+                            <span style="font-size:0.85rem; color:var(--text-muted);">Auto-synchronized schedule</span>
+                        </div>
+                        <div id="reminders-container">
+                            <p style="color:var(--text-muted); text-align:center;">Loading schedule...</p>
+                        </div>
+                    </div>
+
+                    <!-- Prescriptions Card -->
+                    <div class="card">
+                        <div class="card-header">
+                            <h2 class="card-title"><span>📄</span> Active Prescriptions on File</h2>
+                        </div>
+                        <div id="patient-rx-list">
+                            <!-- Injected by JS -->
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Right: AI Adherence Insights -->
+                <div>
+                    <div class="ai-insight-box">
+                        <h3 style="font-size:1.1rem; font-weight:700;">AI Adherence Intelligence</h3>
+                        <p style="font-size:0.8rem; color:#94a3b8; margin-top:0.2rem;">Scikit-learn Predictive Model (CI-07)</p>
+                        
+                        <div class="ai-score-display">
+                            <div id="ai-adherence-score" class="ai-radial-score">--%</div>
+                            <div>
+                                <span id="ai-risk-badge" class="pill-badge food">Analyzing...</span>
+                                <div style="font-size:0.75rem; color:#94a3b8; margin-top:0.3rem;">Predictive Compliance Probability</div>
+                            </div>
+                        </div>
+
+                        <div id="ai-advice-content" class="ai-advice-text">
+                            Analyzing medication schedule and adherence history...
+                        </div>
+                    </div>
+
+                    <div class="card">
+                        <div class="card-header">
+                            <h3 class="card-title" style="font-size:0.95rem;"><span>💡</span> Medication Safety Tips</h3>
+                        </div>
+                        <ul style="font-size:0.85rem; color:var(--text-muted); padding-left:1.2rem; line-height:1.6;">
+                            <li>Take Lisinopril with a full glass of water every morning.</li>
+                            <li>Do not skip Metformin midday doses to avoid glycemic spikes.</li>
+                            <li>Report sudden dizziness to Caregiver Mary Davis.</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- ============================================ -->
+        <!-- VIEW 2: DOCTOR PORTAL                        -->
+        <!-- ============================================ -->
+        <section id="view-doctor" class="view-panel">
+            <div class="card">
+                <div class="card-header">
+                    <h2 class="card-title"><span>🩺</span> Issue Digital Prescription with AI Drug Conflict Engine</h2>
+                    <span class="pill-badge food">Scikit-learn & Rule Matrix Protected</span>
+                </div>
+
+                <form id="prescription-form">
+                    <div style="display:grid; grid-template-columns: 1fr 1fr; gap:1rem; margin-bottom:1rem;">
+                        <div class="form-group">
+                            <label class="form-label">Select Patient</label>
+                            <select id="rx-patient-select" class="form-control" required></select>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Primary Diagnosis / Clinical Notes</label>
+                            <input type="text" id="rx-diagnosis-input" class="form-control" placeholder="e.g. Hypertension, Cardiovascular Follow-up" required>
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label">Special Doctor Instructions</label>
+                        <input type="text" id="rx-notes-input" class="form-control" placeholder="e.g. Low sodium diet, monitor blood pressure weekly">
+                    </div>
+
+                    <div style="margin-top:1.5rem; margin-bottom:0.75rem; display:flex; justify-content:space-between; align-items:center;">
+                        <h3 style="font-size:0.95rem; font-weight:700;">Prescribed Medications (Line Items)</h3>
+                        <button type="button" id="btn-add-rx-row" class="btn btn-outline" style="font-size:0.8rem;">
+                            <span>➕</span> Add Another Medicine
+                        </button>
+                    </div>
+
+                    <!-- Medicine Rows Container -->
+                    <div id="rx-items-container">
+                        <div class="rx-item-row" style="display:grid; grid-template-columns: 2fr 1fr 1.5fr 1fr auto; gap:0.5rem; margin-bottom:0.75rem; align-items:center;">
+                            <input type="text" class="form-control med-name-input" placeholder="e.g. Warfarin, Aspirin, Lisinopril" value="Aspirin" required>
+                            <input type="text" class="form-control med-dosage-input" placeholder="e.g. 81 mg" value="81 mg" required>
+                            <select class="form-control med-freq-select">
+                                <option value="Once Daily (Morning)">Once Daily (Morning)</option>
+                                <option value="Twice Daily">Twice Daily</option>
+                                <option value="Three Times Daily">Three Times Daily</option>
+                                <option value="Once Daily (Night)">Once Daily (Night)</option>
+                            </select>
+                            <input type="number" class="form-control med-duration-input" value="30" min="1" max="90">
+                            <button type="button" class="btn btn-outline" style="color:var(--danger);" onclick="this.parentElement.remove()">✕</button>
+                        </div>
+                    </div>
+
+                    <!-- AI Interaction Pre-Check Box -->
+                    <div id="doctor-ai-report-box" style="display:none; margin:1rem 0;"></div>
+
+                    <div style="margin-top:1.5rem; display:flex; gap:0.75rem;">
+                        <button type="button" id="btn-run-ai-check" class="btn btn-outline" style="border-color:#38bdf8; color:#0284c7;">
+                            <span>🤖</span> Run AI Drug Interaction Check
+                        </button>
+                        <button type="submit" class="btn btn-primary">
+                            <span>📝</span> Issue & Schedule Prescription
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </section>
+
+        <!-- ============================================ -->
+        <!-- VIEW 3: CAREGIVER PORTAL                     -->
+        <!-- ============================================ -->
+        <section id="view-caregiver" class="view-panel">
+            <div class="card">
+                <div class="card-header">
+                    <h2 class="card-title"><span>🛡️</span> Caregiver Safety & Missed Dose Escalation Monitor</h2>
+                    <span style="font-size:0.85rem; color:var(--text-muted);">Real-time Patient Observability</span>
+                </div>
+                <p style="font-size:0.9rem; color:var(--text-muted); margin-bottom:1.25rem;">
+                    Monitors your loved ones. When scheduled doses are not acknowledged within the safe window, automated alerts escalate here.
+                </p>
+                <div id="caregiver-alerts-container">
+                    <p style="color:var(--text-muted);">Loading alert feed...</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- ============================================ -->
+        <!-- VIEW 4: PHARMACY PORTAL                      -->
+        <!-- ============================================ -->
+        <section id="view-pharmacy" class="view-panel">
+            <div class="card">
+                <div class="card-header">
+                    <h2 class="card-title"><span>💊</span> Pharmacy Dispensary & Refill Queue</h2>
+                    <span class="pill-badge food">HealthPlus Pharmacy Metro Branch</span>
+                </div>
+                <p style="font-size:0.9rem; color:var(--text-muted); margin-bottom:1.25rem;">
+                    Incoming refill requests submitted by patients whose medication supply is low. Dispensing automatically replenishes inventory.
+                </p>
+                <div id="pharmacy-refills-container">
+                    <p style="color:var(--text-muted);">Loading refill requests...</p>
+                </div>
+            </div>
+        </section>
+
+    </main>
+
+    <!-- ============================================ -->
+    <!-- MODAL 1: LIVE REMINDER ALERT POPUP           -->
+    <!-- ============================================ -->
+    <div id="reminder-alert-modal" class="modal-overlay">
+        <div class="modal-content" style="max-width:480px; text-align:center;">
+            <button class="modal-close-btn" onclick="closeReminderAlertModal()">✕</button>
+            <div style="font-size:3.5rem; margin-bottom:0.5rem; animation: pulse 1s infinite;">🔔</div>
+            <h2 style="font-size:1.4rem; font-weight:800; color:var(--text-main);">Medication Due Now!</h2>
+            <div id="modal-time-badge" style="background:#0284c7; color:white; display:inline-block; padding:0.3rem 0.8rem; border-radius:999px; font-weight:700; margin:0.5rem 0;">
+                08:30 AM
+            </div>
+            <h3 id="modal-med-title" style="font-size:1.3rem; margin:0.5rem 0; color:var(--primary);">Lisinopril 10 mg</h3>
+            <p id="modal-instructions" style="font-size:0.9rem; color:var(--text-muted); margin-bottom:1.5rem;">After Breakfast with water</p>
+            
+            <div style="display:flex; justify-content:center; gap:0.75rem;">
+                <button class="btn btn-success" style="padding:0.75rem 1.5rem; font-size:1rem;" onclick="closeReminderAlertModal(); showToast('Marked as taken! Good job maintaining adherence.', 'success');">
+                    ✓ Confirm Taken
+                </button>
+                <button class="btn btn-warning" style="padding:0.75rem 1.25rem; font-size:0.95rem;" onclick="closeReminderAlertModal(); showToast('Reminder snoozed for 15 minutes.', 'warning');">
+                    ⏰ Snooze (15m)
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ============================================ -->
+    <!-- MODAL 2: SCM CONFIGURATION AUDIT (CI-01..13) -->
+    <!-- ============================================ -->
+    <div id="scm-modal" class="modal-overlay">
+        <div class="modal-content" style="max-width:850px;">
+            <button id="scm-modal-close" class="modal-close-btn">✕</button>
+            <h2 style="font-size:1.3rem; font-weight:800; margin-bottom:0.5rem;">📋 SCM Status Accounting & Baselines (CI-01 to CI-13)</h2>
+            <p style="font-size:0.85rem; color:var(--text-muted); margin-bottom:1.25rem;">
+                Review 1 & Review 2 SCM traceability matrix matching CMMI / SWEBOK standards.
+            </p>
+
+            <table class="custom-table">
+                <thead>
+                    <tr>
+                        <th>CI Identifier</th>
+                        <th>Configuration Item Name</th>
+                        <th>Version</th>
+                        <th>Approval Status</th>
+                        <th>Owner</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td><strong>CI-01</strong></td>
+                        <td>Project Proposal</td>
+                        <td>v1.0</td>
+                        <td><span class="pill-badge food">Approved</span></td>
+                        <td>Naveen R</td>
+                    </tr>
+                    <tr>
+                        <td><strong>CI-02</strong></td>
+                        <td>Software Requirement Specification (SRS)</td>
+                        <td>v1.0</td>
+                        <td><span class="pill-badge food">Baselined</span></td>
+                        <td>Hakkash U</td>
+                    </tr>
+                    <tr>
+                        <td><strong>CI-03</strong></td>
+                        <td>SCM Plan</td>
+                        <td>v1.0</td>
+                        <td><span class="pill-badge food">Baselined</span></td>
+                        <td>Naveen R</td>
+                    </tr>
+                    <tr>
+                        <td><strong>CI-04</strong></td>
+                        <td>System Design Document</td>
+                        <td>v1.0</td>
+                        <td><span class="pill-badge food">Approved</span></td>
+                        <td>Hakkash U</td>
+                    </tr>
+                    <tr>
+                        <td><strong>CI-05</strong></td>
+                        <td>Database Design (SQLite Schema)</td>
+                        <td>v1.0</td>
+                        <td><span class="pill-badge food">Baselined</span></td>
+                        <td>Naveen R</td>
+                    </tr>
+                    <tr>
+                        <td><strong>CI-06</strong></td>
+                        <td>Source Code (Flask + SQLite + JS)</td>
+                        <td>Git v1.0.0</td>
+                        <td><span class="pill-badge food">In Release</span></td>
+                        <td>Hakkash U</td>
+                    </tr>
+                    <tr>
+                        <td><strong>CI-07</strong></td>
+                        <td>AI Reminder & Interaction Module</td>
+                        <td>v1.0</td>
+                        <td><span class="pill-badge food">Verified</span></td>
+                        <td>Hakkash U</td>
+                    </tr>
+                    <tr>
+                        <td><strong>CI-08</strong></td>
+                        <td>User Interface Designs (Dashboard)</td>
+                        <td>v1.0</td>
+                        <td><span class="pill-badge food">Approved</span></td>
+                        <td>Naveen R</td>
+                    </tr>
+                    <tr>
+                        <td><strong>CI-09</strong></td>
+                        <td>Test Plan</td>
+                        <td>v1.0</td>
+                        <td><span class="pill-badge food">Baselined</span></td>
+                        <td>Hakkash U</td>
+                    </tr>
+                    <tr>
+                        <td><strong>CI-10</strong></td>
+                        <td>Test Cases (Functional & FCA)</td>
+                        <td>v1.0</td>
+                        <td><span class="pill-badge food">Verified</span></td>
+                        <td>Naveen R</td>
+                    </tr>
+                    <tr>
+                        <td><strong>CI-11</strong></td>
+                        <td>User Manual</td>
+                        <td>v1.0</td>
+                        <td><span class="pill-badge food">Completed</span></td>
+                        <td>Hakkash U</td>
+                    </tr>
+                    <tr>
+                        <td><strong>CI-12</strong></td>
+                        <td>Deployment Guide (Local Python Run)</td>
+                        <td>v1.0</td>
+                        <td><span class="pill-badge food">Completed</span></td>
+                        <td>Naveen R</td>
+                    </tr>
+                    <tr>
+                        <td><strong>CI-13</strong></td>
+                        <td>Release Package</td>
+                        <td>v1.0.0</td>
+                        <td><span class="pill-badge food">Release Baseline</span></td>
+                        <td>Naveen R</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- Notification Toasts Container -->
+    <div id="toast-container"></div>
+
+    <script src="/static/js/app.js"></script>
+</body>
+</html>
